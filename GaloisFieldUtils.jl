@@ -123,7 +123,10 @@ end
 
 getconwaypolynomialofdegree(d::Int) = Polynomial(GaloisFields.conwaypolynomial(2,d))
 
-function Base.log(a::F, α::F)::Int where F <: GaloisFields.AbstractGaloisField
+function Base.log(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
+    if iszero(a)
+        return Inf
+    end
     for i in 0:length(F)-2
         if a == α^i
             return i
@@ -233,6 +236,7 @@ function makepreprocmatrix(A::Array{F,2}, b1::Array{F,1}, p::Int) where F <: Gal
     Bp
 end
 
+# パリティ検査行列のバイナリ表現を生成する．
 function makeHmat(genpoly::Polynomial{F}, Hlen::Int = 0)::Array{F2, 2} where F <: GaloisFields.AbstractGaloisField
     g = Array{F2}(genpoly.coeffs[1:end-1])
     A = makecompanionmatrix(g)
@@ -295,4 +299,10 @@ julia> logcoeffs(Polynomial([α^10, 1]), α)
 """
 function logcoeffs(f::Polynomial{F}, b::F) where F <: GaloisFields.AbstractGaloisField
     return map(x -> log(x, b), f.coeffs)
+end
+
+# べき表示にするのにもっといい方法ないものか．．．
+function gfpretty(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
+    p = log(a, α)
+    return "α^"*string(p)
 end
