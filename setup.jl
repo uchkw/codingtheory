@@ -1,5 +1,7 @@
 using Pkg
 Pkg.add("GaloisFields")
+Pkg.add("Polynomials")
+Pkg.add("Formatting")
 Pkg.add("Distributions")
 Pkg.add("LaTeXStrings")
 Pkg.add("Noise")
