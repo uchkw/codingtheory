@@ -1,6 +1,7 @@
 # Personal Libraries for GaloisFields.jl
 using GaloisFields
 using Polynomials
+using Formatting
 isdefined(Main, :F2) || const F2 = @GaloisField 2
 
 # dec to binary converter
@@ -21,6 +22,9 @@ end
 de2bi(d::UInt; width::Int = 0) = de2bi(Int(d); width)
 de2bi(d::UInt8; width::Int = 0) = de2bi(Int(d); width)
 de2bi(d::UInt16; width::Int = 0) = de2bi(Int(d); width)
+
+de2f2(d::Int; width::Int = 0)::Array{F2, 1} = map(F2, de2bi(d; width=width))
+de2f2poly(d::Int; width::Int = 0)::Polynomial{F2, :x} = Polynomial(map(F2, de2bi(d; width=width)))
 
 function bi2de(b::Array{F,1}) where F <: GaloisFields.AbstractGaloisField
     sum([b[i].n * 2^(i - 1) for i = eachindex(b)])
@@ -147,6 +151,7 @@ function getconjugates(β::F)::Array{F,1} where F <: GaloisFields.AbstractExtens
 end
 
 # from Polynomials v.0.6.1
+# return the polynomial with roots r
 function poly(r::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {T}
     n = length(r)
     c = zeros(T, n+1)
@@ -213,6 +218,30 @@ function makecompanionmatrix(a::F)::Array{F2,2} where F <: GaloisFields.Abstract
         A[:,i] = bvec(a^i)
     end
     A
+end
+
+function isprimitive(p::Polynomial{F2})::Bool
+    if getorder(p) == 2^degree(p) - 1
+        return true
+    end
+    return false
+end
+
+# generate the list of primitive polynomials of argument degree
+function generateprimitivepolynomials(degree::Integer)::Array{Polynomial{F2}, 1}
+    polylist = []
+    for i in 2^degree+1:2:2^(degree+1) - 1
+        p = de2f2poly(i)
+        if isprimitive(p)
+            push!(polylist, p)
+        end
+    end
+    return polylist
+end
+
+# return number of non-zero coefficients
+function numterms(f::Polynomial{F}) where F <: GaloisFields.AbstractGaloisField
+    return sum(f.coeffs .!= 0)
 end
 
 ######## この辺以下は別のファイルにしたほうがいいかも．Coding theoryにより過ぎてる
