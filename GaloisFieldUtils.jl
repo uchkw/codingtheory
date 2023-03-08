@@ -4,6 +4,9 @@ using Polynomials
 using Formatting
 isdefined(Main, :F2) || const F2 = @GaloisField 2
 
+exsize(ff::DataType) = Int(floor(log2(length(ff))))
+exsize(alpha::GaloisFields.AbstractExtensionField) = Int(floor(log2(length(typeof(alpha)))))
+
 # dec to binary converter
 function de2bi(d::Int; width::Int = 0)::Array{Int, 1}
     bw = 1
@@ -32,6 +35,7 @@ end
 
 bi2de(α::F) where F <: GaloisFields.AbstractGaloisField = bi2de(bvec(α))
 
+# get the GF(2) vector corresponding to the element 
 function bvec(α::Fe) where Fe <: GaloisFields.AbstractExtensionField
     retF2(x::T, i) where T <: Unsigned = (x >> (i-1) & 1) != 0 ? F2(1) : F2(0) 
     return [ retF2(α.n, i) for i in 1:Int(log2(length(typeof(α)))) ]
