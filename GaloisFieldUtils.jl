@@ -57,6 +57,14 @@ function F2p(b::Array{Fb, 1}, α::Fe) where Fb <: GaloisFields.AbstractGaloisFie
     return sum(basis .* b)
 end
 
+function F2p(Fe::DataType, b::Array{Fb, 1}) where Fb <: GaloisFields.AbstractGaloisField
+    @assert length(b) == exsize(Fe)
+    α = primitiveroot(Fe)
+    basis = [ α^i for i in 0:length(b)-1 ]
+    return sum(basis .* b)
+end
+
+
 function hex(v::Array{F2,1}, wordsize=32)
     nwd = ceil(Int, length(v)/wordsize)
     if length(v) < wordsize
