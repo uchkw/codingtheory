@@ -7,6 +7,8 @@ isdefined(Main, :F2) || const F2 = @GaloisField 2
 exsize(ff::DataType) = Int(floor(log2(length(ff))))
 exsize(alpha::GaloisFields.AbstractExtensionField) = Int(floor(log2(length(typeof(alpha)))))
 
+primitiveroot(FF::DataType) = eval(FF.parameters[3])
+
 # dec to binary converter
 function de2bi(d::Int; width::Int = 0)::Array{Int, 1}
     bw = 1
@@ -137,6 +139,18 @@ function Base.log(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
     end
     for i in 0:length(F)-2
         if a == α^i
+            return i
+        end
+    end
+end
+
+function Base.log(a::F) where F <: GaloisFields.AbstractGaloisField
+    if iszero(a)
+        return Inf
+    end
+    p = primitiveroot(F)
+    for i in 0:length(F)-2
+        if a == p^i
             return i
         end
     end
@@ -317,6 +331,9 @@ Return polynomial coefficients with increasing degree order
 function logcoeffs(f::F, b::Fb) where F <: GaloisFields.AbstractGaloisField where Fb <: GaloisFields.AbstractGaloisField
     return map(x -> log(x, b), f.coeffs)
 end
+function logcoeffs(f::F) where F <: GaloisFields.AbstractGaloisField
+    return map(x -> log(x), f.coeffs)
+end
 
 
 """
@@ -333,9 +350,16 @@ julia> logcoeffs(Polynomial([α^10, 1]), α)
 function logcoeffs(f::Polynomial{F}, b::F) where F <: GaloisFields.AbstractGaloisField
     return map(x -> log(x, b), f.coeffs)
 end
+function logcoeffs(f::Polynomial{F}) where F <: GaloisFields.AbstractGaloisField
+    return map(x -> log(x), f.coeffs)
+end
 
 # べき表示にするのにもっといい方法ないものか．．．
 function gfpretty(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
     p = log(a, α)
+    return "α^"*string(p)
+end
+function gfpretty(a::F) where F <: GaloisFields.AbstractGaloisField
+    p = log(a)
     return "α^"*string(p)
 end
