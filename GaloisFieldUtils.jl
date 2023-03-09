@@ -240,8 +240,11 @@ end
 function makecompanionmatrix(a::F)::Array{F2,2} where F <: GaloisFields.AbstractGaloisField
     d = length(bvec(a))
     A = zeros(F2, d, d)
+    v = a
+    p = primitiveroot(typeof(a))
     for i in 1:d
-        A[:,i] = bvec(a^i)
+        A[:,i] = bvec(v)
+        v *= p
     end
     A
 end
