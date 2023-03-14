@@ -374,3 +374,7 @@ function gfpretty(a::F) where F <: GaloisFields.AbstractGaloisField
     p = log(a)
     return "α^"*string(p)
 end
+function gfpretty(v::Vector{F}) where F <: GaloisFields.AbstractGaloisField
+    map(gfpretty, v)
+end
+
