@@ -378,3 +378,40 @@ function gfpretty(v::Vector{F}) where F <: GaloisFields.AbstractGaloisField
     map(gfpretty, v)
 end
 
+function extract_degrees(polynomial::AbstractString)
+    degrees = Vector{Int64}()
+
+    # 項ごとに分割して処理する
+    terms = split(polynomial, "+")
+    for term in terms
+        # 次数の部分を取り出す
+        match_result = match(r"x\^(\d+)", term)
+        if match_result !== nothing
+            degree = parse(Int64, match_result.captures[1])
+            push!(degrees, degree)
+        else
+            if occursin("x",term)
+                push!(degrees, 1)
+            elseif occursin("1",term)
+                push!(degrees, 0)
+            end
+        end
+    end
+
+    # 次数が高い順にソートして返す
+    return sort(degrees, rev=true)
+end
+
+function string2coefvec(polynomial::AbstractString)
+    degrees = extract_degrees(polynomial)
+    degreearray = zeros(Int,maximum(degrees)+1)
+    for i in degrees
+        degreearray[i+1] = 1
+    end
+    return degreearray
+end
+
+function string2F2poly(polynomial::AbstractString)::Polynomial{F2, :x}
+    f2array = map(F2,string2coefvec(polynomial))
+    return Polynomial(f2array)
+end
