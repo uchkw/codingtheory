@@ -34,7 +34,9 @@ de2f2poly(d::Int; width::Int = 0)::Polynomial{F2, :x} = Polynomial(map(F2, de2bi
 function bi2de(b::Array{F,1}) where F <: GaloisFields.AbstractGaloisField
     sum([b[i].n * 2^(i - 1) for i = eachindex(b)])
 end
-
+# convert binary vector to decimal. you can also specify bit width
+bi2de(b::Array{Int8,1}) = sum([b[i] * 2^(i - 1) for i = 1:length(b)])
+bi2de(b::Array{Int64,1}) = sum([b[i] * 2^(i - 1) for i = 1:length(b)])
 bi2de(α::F) where F <: GaloisFields.AbstractGaloisField = bi2de(bvec(α))
 
 # get the GF(2) vector corresponding to the element 
@@ -50,6 +52,17 @@ function bvec(x::T, bw::Int=0)::Array{F2, 1} where T <: Integer
     bx = de2bi(x, width=bw)
     return map(F2, bx)
 end
+
+function bvec(p::Polynomial{F2,:x}, bw::Int=0)::Array{F2, 1}
+    if iszero(bw) || iszero(bw-length(p))
+        return p.coeffs
+    else
+        return vcat(p.coeffs,zeros(F2, bw-length(p)))
+    end
+end
+
+# get binary weights of the F2 vector
+wt(v::Array{F2,1})::Int = sum([v[i].n for i = eachindex(v)])
 
 function F2p(b::Array{Fb, 1}, α::Fe) where Fb <: GaloisFields.AbstractGaloisField where Fe <: GaloisFields.AbstractExtensionField
     @assert length(b) == log2(length(typeof(α)))
@@ -228,6 +241,7 @@ function onehotvector(len::Int, pos::Int, v::F)::Array{F,1} where F <: GaloisFie
     ret
 end
 
+# MSBを落とす
 function makecompanionmatrix(g::Array{F,1})::Array{F,2} where F <: GaloisFields.AbstractGaloisField
     A = zeros(F, length(g), length(g))
     A[:,end] = copy(g)
@@ -309,30 +323,21 @@ end
 # m=8だとオフセットを1(z=0)にできない
 # 2bit訂正時に使用するY行列を生成する
 function generateYvec(α::Fe, z::Int=0)::Array{Fe,1} where Fe <: GaloisFields.AbstractExtensionField
-    dim = Int(log(2,length(typeof(α))))
+    dim = exsize(α)
     Y = zeros(Fe, dim)
-    didfound = zeros(Bool, dim)
-    for j in 0:length(typeof(α))-2
-        yi = α^j
-        y = yi + yi^2
-        for i in 1:dim
-            im1 = i - 1
-            if isequal(tr(α^im1), 1)
-                if isequal(y, α^im1 + α^z) 
-                    Y[i] = yi
-                    didfound[i] = true
-                end
-            else
-                if isequal(y, α^im1) 
-                    Y[i] = yi
-                    didfound[i] = true
-                end
+    for i in 1:dim
+        im1 = i - 1
+        basis = α^im1 + tr(α^im1) * α^z
+        for j in 0:length(typeof(α))-2
+            yi = α^j
+            y = yi + yi^2
+            if isequal(y, basis)
+                Y[i] = yi
+                break
             end
         end
-        if isequal(sum(didfound), dim)
-            return Y
-        end
     end
+    return Y
 end
 
 """
@@ -377,6 +382,22 @@ end
 function gfpretty(v::Vector{F}) where F <: GaloisFields.AbstractGaloisField
     map(gfpretty, v)
 end
+# show polynomial representation of binary vector
+function gfpretty(b::Array{Int8,1})
+    for i = 1:length(b)
+        if b[i] != 0
+            i == 1 ? print("1") : print("x")
+            if i > 2
+                print("^", i - 1)
+            end
+            if i < length(b)
+                print(" + ")
+            end
+        end
+    end
+    print("\n")
+end
+
 
 function extract_degrees(polynomial::AbstractString)
     degrees = Vector{Int64}()
