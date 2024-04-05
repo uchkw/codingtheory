@@ -177,3 +177,39 @@ function prob_ud_using_dual(p::Float64, n::Int, r::Int, B::Array{BigInt,1})
     pud -= BigFloat(1 - p)^n
     return pud
 end
+
+# errnum 次の全ての係数が 1 の有限体の係数を持つ多項式を返す．
+function get_biterr_poly(errnum::Int, FE::DataType=FF)::Polynomial{FE}
+    return Polynomial([FF(1) for i in 1:errnum], :x)
+end
+
+# errnum 次の全ての係数が 1 の有限体の係数を持つ多項式を返す．
+function get_rnderr_poly(errnum::Int, FE::DataType=FF)::Polynomial{FE}
+    return Polynomial(rand(FF, errnum), :x)
+end
+
+# Obtain the syndrome from the error or received polynomial
+function calc_syndrome(ex::Polynomial{FE}, num::Int, x::FE=α)::Array{FE, 1} where FE <: GaloisFields.AbstractExtensionField
+    return ex.([x^i for i in 0:num-1])
+end
+
+# Determine the error location polynomial by the PGZ algorithm
+function get_elp_by_pgz(S::Array{FE, 1})::Polynomial{FE} where FE <: GaloisFields.AbstractExtensionField
+    t = length(S) ÷ 2
+    v = t
+    Smat = [S[i+j] for i in 1:v, j in 0:v-1]
+    invS = inv(Smat)
+    while iszero(invS)
+        v -= 1
+        if iszero(v)
+            return FE(0)
+        end
+        Smat = [S[i+j] for i in 1:v, j in 0:v-1]
+        invS = inv(Smat)
+    end
+    v = size(Smat,2)
+    Svec = [S[v+i] for i in 1:v]
+    σ = invS * Svec
+    append!(σ, FE(1)) # add maximum degree coefficient "1"
+    return Polynomial(σ, :x)
+end
