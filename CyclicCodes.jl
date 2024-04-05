@@ -178,19 +178,21 @@ function prob_ud_using_dual(p::Float64, n::Int, r::Int, B::Array{BigInt,1})
     return pud
 end
 
-# errnum 次の全ての係数が 1 の有限体の係数を持つ多項式を返す．
-function get_biterr_poly(errnum::Int, FE::DataType=FF)::Polynomial{FE}
-    return Polynomial([FF(1) for i in 1:errnum], :x)
+# numerr 次の全ての係数が 1 の有限体の係数を持つ多項式を返す．
+function get_biterr_poly(numerr::Int, FE::DataType=FF)::Polynomial{FE}
+    numerr <= 0 && return Polynomial([FE(0)], :x)
+    return Polynomial([FE(1) for i in 1:numerr], :x)
 end
 
-# errnum 次の全ての係数が 1 の有限体の係数を持つ多項式を返す．
-function get_rnderr_poly(errnum::Int, FE::DataType=FF)::Polynomial{FE}
-    return Polynomial(rand(FF, errnum), :x)
+# numerr 次の全ての係数が 1 の有限体の係数を持つ多項式を返す．
+function get_rnderr_poly(numerr::Int, FE::DataType=FF)::Polynomial{FE}
+    numerr <= 0 && return Polynomial([FE(0)], :x)
+    return Polynomial(rand(FE, numerr), :x)
 end
 
 # Obtain the syndrome from the error or received polynomial
-function calc_syndrome(ex::Polynomial{FE}, num::Int, x::FE=α)::Array{FE, 1} where FE <: GaloisFields.AbstractExtensionField
-    return ex.([x^i for i in 0:num-1])
+function calc_syndrome(ex::Polynomial{FE}, num::Int, α::FE)::Array{FE, 1} where FE <: GaloisFields.AbstractExtensionField
+    return ex.([α^i for i in 0:num-1])
 end
 
 # Determine the error location polynomial by the PGZ algorithm
