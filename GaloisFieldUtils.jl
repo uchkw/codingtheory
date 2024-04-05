@@ -436,3 +436,51 @@ function string2F2poly(polynomial::AbstractString)::Polynomial{F2, :x}
     f2array = map(F2,string2coefvec(polynomial))
     return Polynomial(f2array)
 end
+
+# return inverse matrix
+# if the matrix is singular, return zero matrix
+function Base.inv(_A::Matrix{FE})::Array{FE} where FE <: GaloisFields.AbstractExtensionField
+    A = copy(_A)
+    Asize = size(A, 1)
+    @assert size(A) == (Asize, Asize)
+    B = zeros(FE, Asize, Asize)
+    for i in 1:Asize
+        B[i, i] = FE(1)
+    end
+    
+    # Forward elimination
+    for i in 1:Asize
+        # Find pivot
+        pivot_row = i
+        # @show pivot_row i A[pivot_row, i]
+        if iszero(A[pivot_row, i])
+            ofs = findfirst(!iszero, A[pivot_row+1:end, i])
+            if isnothing(ofs)
+                return zeros(FE)  # Singular matrix, no inverse
+            end
+            pivot_row += ofs
+        end
+        A[i, :], A[pivot_row, :] = A[pivot_row, :], A[i, :]
+        B[i, :], B[pivot_row, :] = B[pivot_row, :], B[i, :]
+        
+        # Normalize pivot row
+        B[i, :] *= inv(A[i, i])
+        A[i, :] *= inv(A[i, i])
+        
+        # Eliminate below
+        for j in i+1:Asize
+            B[j, :] += B[i, :] * A[j, i]
+            A[j, :] += A[i, :] * A[j, i]
+        end
+    end
+    
+    # Backward substitution
+    for i in Asize:-1:2
+        for j in i-1:-1:1
+            B[j, :] += B[i, :] * A[j, i]
+            A[j, :] += A[i, :] * A[j, i]
+        end
+    end
+    
+    return B
+end
