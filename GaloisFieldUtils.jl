@@ -264,7 +264,7 @@ function makecompanionmatrix(a::F)::Array{F2,2} where F <: GaloisFields.Abstract
 end
 
 function isprimitive(p::Polynomial{F2})::Bool
-    if getorder(p) == 2^degree(p) - 1
+    if getorder(p) == 2^Polynomials.degree(p) - 1
         return true
     end
     return false
