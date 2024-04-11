@@ -484,3 +484,23 @@ function Base.inv(_A::Matrix{FE})::Array{FE} where FE <: GaloisFields.AbstractEx
     
     return B
 end
+
+function isprimitive(a::FF)::Bool where FF <: GaloisFields.AbstractExtensionField
+    for i in 1:length(FF)-2
+        if isone(a^i)
+            return false
+        end
+    end
+    return true
+end
+
+function primitiveelements(FF::DataType)::Array{FF, 1} 
+    α = primitiveroot(FF)
+    pelements = [α]
+    for i in 2:length(FF)-2
+        if isprimitive(α^i)
+            push!(pelements, α^i)
+        end
+    end
+    return pelements
+end
