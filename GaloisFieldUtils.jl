@@ -7,6 +7,8 @@ isdefined(Main, :F2) || const F2 = @GaloisField 2
 exsize(ff::DataType) = Int(floor(log2(length(ff))))
 exsize(alpha::GaloisFields.AbstractExtensionField) = Int(floor(log2(length(typeof(alpha)))))
 
+# local で宣言されたGaloisFieldに対してこの関数で原始元を取得できない 2024-04-12
+# eval はグローバル変数にしか有効じゃない．
 primitiveroot(FF::DataType) = eval(FF.parameters[3])
 
 # dec to binary converter
@@ -165,11 +167,12 @@ function Base.log(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
     end
 end
 
+#エラーが出る．2024-04-12
 function Base.log(a::F) where F <: GaloisFields.AbstractGaloisField
     if iszero(a)
         return Inf
     end
-    p = primitiveroot(F)
+    p = primitiveroot(F) # 体から原始元を取得できなみたい．なぜだ
     for i in 0:length(F)-2
         if a == p^i
             return i
@@ -251,6 +254,7 @@ function makecompanionmatrix(g::Array{F,1})::Array{F,2} where F <: GaloisFields.
     A
 end
 
+# primitiveroot関数を使っているため，ローカルスコープで定義されたGaloisFieldに使用できない
 function makecompanionmatrix(a::F)::Array{F2,2} where F <: GaloisFields.AbstractGaloisField
     d = length(bvec(a))
     A = zeros(F2, d, d)
@@ -259,6 +263,17 @@ function makecompanionmatrix(a::F)::Array{F2,2} where F <: GaloisFields.Abstract
     for i in 1:d
         A[:,i] = bvec(v)
         v *= p
+    end
+    A
+end
+
+function makecompanionmatrix(a::F, α::F)::Array{F2,2} where F <: GaloisFields.AbstractGaloisField
+    d = length(bvec(a))
+    A = zeros(F2, d, d)
+    v = a
+    for i in 1:d
+        A[:,i] = bvec(v)
+        v *= α
     end
     A
 end
@@ -494,12 +509,11 @@ function isprimitive(a::FF)::Bool where FF <: GaloisFields.AbstractExtensionFiel
     return true
 end
 
-function primitiveelements(FF::DataType)::Array{FF, 1} 
-    α = primitiveroot(FF)
-    pelements = [α]
+function primitiveelements(a::FF)::Array{FF, 1} where FF <: GaloisFields.AbstractExtensionField
+    pelements = [a]
     for i in 2:length(FF)-2
-        if isprimitive(α^i)
-            push!(pelements, α^i)
+        if isprimitive(a^i)
+            push!(pelements, a^i)
         end
     end
     return pelements
