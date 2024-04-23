@@ -267,6 +267,7 @@ function makecompanionmatrix(a::F)::Array{F2,2} where F <: GaloisFields.Abstract
     A
 end
 
+# a はコンパニオン行列の最初の列の要素, αは基底となる原始元
 function makecompanionmatrix(a::F, α::F)::Array{F2,2} where F <: GaloisFields.AbstractGaloisField
     d = length(bvec(a))
     A = zeros(F2, d, d)
