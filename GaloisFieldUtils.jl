@@ -5,7 +5,19 @@ using Formatting
 isdefined(Main, :F2) || const F2 = @GaloisField 2
 
 exsize(ff::DataType) = Int(floor(log2(length(ff))))
-exsize(alpha::GaloisFields.AbstractExtensionField) = Int(floor(log2(length(typeof(alpha)))))
+fieldsize(a::GaloisFields.AbstractExtensionField)::Int = length(typeof(a))
+# assuming that the field is a power of 2
+function exsize(a::GaloisFields.AbstractExtensionField)::Int
+    fs = fieldsize(a)
+    exsz = 1
+    while true
+        fs >>= 1
+        if isone(fs)
+            return exsz
+        end
+        exsz += 1
+    end
+end
 
 # local で宣言されたGaloisFieldに対してこの関数で原始元を取得できない 2024-04-12
 # eval はグローバル変数にしか有効じゃない．
@@ -42,9 +54,8 @@ bi2de(b::Array{Int64,1}) = sum([b[i] * 2^(i - 1) for i = 1:length(b)])
 bi2de(α::F) where F <: GaloisFields.AbstractGaloisField = bi2de(bvec(α))
 
 # get the GF(2) vector corresponding to the element 
-function bvec(α::Fe) where Fe <: GaloisFields.AbstractExtensionField
-    retF2(x::T, i) where T <: Unsigned = (x >> (i-1) & 1) != 0 ? F2(1) : F2(0) 
-    return [ retF2(α.n, i) for i in 1:Int(log2(length(typeof(α)))) ]
+function bvec(α::Fe)::Vector{F2} where Fe <: GaloisFields.AbstractExtensionField
+    return [ iszero((α.n >> (i-1)) & 1) ? zero(F2) : one(F2) for i in 1:exsize(α) ]
 end
 
 function bvec(x::T, bw::Int=0)::Array{F2, 1} where T <: Integer
@@ -341,7 +352,7 @@ end
 function generateYvec(α::Fe, z::Int=0)::Array{Fe,1} where Fe <: GaloisFields.AbstractExtensionField
     if iszero(tr(α^z))
         for i in 0:length(α)-2
-            if isone(α^i)
+            if isone(tr(α^i))
                 z = i
                 break
             end
