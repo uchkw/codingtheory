@@ -339,6 +339,14 @@ end
 # m=8だとオフセットを1(z=0)にできない
 # 2bit訂正時に使用するY行列を生成する
 function generateYvec(α::Fe, z::Int=0)::Array{Fe,1} where Fe <: GaloisFields.AbstractExtensionField
+    if iszero(tr(α^z))
+        for i in 0:length(α)-2
+            if isone(α^i)
+                z = i
+                break
+            end
+        end
+    end
     dim = exsize(α)
     Y = zeros(Fe, dim)
     for i in 1:dim
