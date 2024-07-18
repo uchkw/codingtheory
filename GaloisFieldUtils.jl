@@ -125,6 +125,45 @@ function fromF2mattoIntmat(M::Array{F, 2}) where F <: GaloisFields.AbstractGaloi
 end
 
 #%%
+# Assuming GF size of 2^m
+function trace(a::F)::F2 where F <: GaloisFields.AbstractGaloisField
+    r = a
+    for i in 1:exsize(F)-1
+        r += a^(2^i)
+    end
+    return ifelse(iszero(r), F2(0), F2(1))
+end
+
+function cuberoot(a::F)::F where F <: GaloisFields.AbstractGaloisField
+    if iszero(a)
+        return zero(F)
+    else
+        N = length(F) - 1
+        if N % 3 != 0
+            i = log(a,α)
+            for j in 0:N-1
+                if i == (3*j % N)
+                    return α^j
+                end
+            end
+        else
+            return a^(N ÷ 3)
+        end
+    end        
+end
+
+function Base. *(a::Vector{F}, b::Vector{F2})::F where F <: GaloisFields.AbstractGaloisField
+    @assert length(a) == length(b)
+    result = F(0) # FF型の初期値を設定
+    @inbounds for i in 1:length(a)
+        result += a[i] * b[i]
+    end
+    return result
+end
+function Base. *(a::Vector{F2}, b::Vector{F})::F where F <: GaloisFields.AbstractGaloisField
+    return Base.*(b, a)
+end
+
 function Base.inv(M::Array{F, 2}) where F <: GaloisFields.AbstractGaloisField
     N = zeros(F, size(M))
     matsize = size(M)[1]
@@ -350,9 +389,9 @@ end
 # m=8だとオフセットを1(z=0)にできない
 # 2bit訂正時に使用するY行列を生成する
 function generateYvec(α::Fe, z::Int=0)::Array{Fe,1} where Fe <: GaloisFields.AbstractExtensionField
-    if iszero(tr(α^z))
+    if iszero(trace(α^z))
         for i in 0:length(α)-2
-            if isone(tr(α^i))
+            if isone(trace(α^i))
                 z = i
                 break
             end
@@ -362,7 +401,7 @@ function generateYvec(α::Fe, z::Int=0)::Array{Fe,1} where Fe <: GaloisFields.Ab
     Y = zeros(Fe, dim)
     for i in 1:dim
         im1 = i - 1
-        basis = α^im1 + tr(α^im1) * α^z
+        basis = α^im1 + trace(α^im1) * α^z
         for j in 0:length(typeof(α))-2
             yi = α^j
             y = yi + yi^2
