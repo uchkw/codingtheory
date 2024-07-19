@@ -134,7 +134,15 @@ function trace(a::F)::F2 where F <: GaloisFields.AbstractGaloisField
     return ifelse(iszero(r), F2(0), F2(1))
 end
 
-function cuberoot(a::F)::F where F <: GaloisFields.AbstractGaloisField
+function getTrOneElem(a::F)::F where F <: GaloisFields.AbstractGaloisField
+    for i in 0:fieldsize(a)-2
+        if isone(trace(a^i))
+            return a^i
+        end
+    end
+end
+
+function cuberoot(a::F, α::F)::F where F <: GaloisFields.AbstractGaloisField
     if iszero(a)
         return zero(F)
     else
@@ -216,6 +224,18 @@ function Base.log(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
         end
     end
 end
+
+function Base.log(a::F; base::F=α) where F <: GaloisFields.AbstractGaloisField
+    if iszero(a)
+        return Inf
+    end
+    for i in 0:length(F)-2
+        if a == base^i
+            return i
+        end
+    end
+end
+
 
 #エラーが出る．2024-04-12
 function Base.log(a::F) where F <: GaloisFields.AbstractGaloisField
