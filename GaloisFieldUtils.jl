@@ -262,6 +262,17 @@ function getconjugates(β::F)::Array{F,1} where F <: GaloisFields.AbstractExtens
     ret
 end
 
+function getroots(px::Polynomial{F}, α::F)::Array{F,1} where F <: GaloisFields.AbstractExtensionField
+    N = fieldsize(α)-2
+    ret = Vector{F}()
+    for i in 0:N
+        if iszero(px(α^i))
+            push!(ret, α^i)
+        end
+    end
+    return ret
+end
+
 # from Polynomials v.0.6.1
 # return the polynomial with roots r
 function poly(r::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {T}
