@@ -212,7 +212,7 @@ function Base.inv(M::Array{F, 2}) where F <: GaloisFields.AbstractGaloisField
     return MN[:,matsize+1:end]
 end
 
-getconwaypolynomialofdegree(d::Int) = Polynomial(GaloisFields.conwaypolynomial(2,d))
+getconwaypolynomialofdegree(d::Int) = Polynomial{F2, :x}(GaloisFields.conwaypolynomial(2,d))
 
 function Base.log(a::F, α::F) where F <: GaloisFields.AbstractGaloisField
     if iszero(a)
